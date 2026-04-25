@@ -1,0 +1,10 @@
+.git
+.DS_Store
+
+backend/coverage.out
+backend/bin/
+backend/data/
+
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/

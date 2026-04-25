@@ -1,0 +1,32 @@
+name: Deploy Backend
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - backend/**
+      - compose.yaml
+      - .github/workflows/render-backend.yml
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Render Deploy Hook
+    runs-on: ubuntu-latest
+    env:
+      RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+
+    steps:
+      - name: Trigger Render deploy
+        if: ${{ env.RENDER_DEPLOY_HOOK_URL != '' }}
+        run: curl -fsS -X POST "${RENDER_DEPLOY_HOOK_URL}"
+
+      - name: Explain missing Render hook
+        if: ${{ env.RENDER_DEPLOY_HOOK_URL == '' }}
+        run: |
+          echo "Set secret RENDER_DEPLOY_HOOK_URL if you want GitHub Actions to trigger backend deploys on Render."
+          echo "Render can also auto-deploy directly from the GitHub repository without this workflow."

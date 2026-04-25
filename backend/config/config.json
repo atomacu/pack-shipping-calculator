@@ -1,0 +1,5 @@
+{
+  "http_port": "8080",
+  "database_path": "data/pack_calculator.db",
+  "pack_sizes": [250, 500, 1000, 2000, 5000]
+}

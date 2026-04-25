@@ -1,0 +1,64 @@
+name: Deploy Frontend
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - frontend/**
+      - .github/workflows/pages.yml
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: GitHub Pages
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      VITE_API_BASE: https://pack-shipping-calculator.onrender.com
+      VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH || format('/{0}/', github.event.repository.name) }}
+      PAGES_TOKEN: ${{ secrets.PAGES_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        if: ${{ env.PAGES_TOKEN == '' }}
+        uses: actions/configure-pages@v5
+
+      - name: Enable and configure Pages
+        if: ${{ env.PAGES_TOKEN != '' }}
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+          token: ${{ env.PAGES_TOKEN }}
+
+      - name: Build frontend in Docker
+        run: |
+          docker run --rm \
+            -e VITE_API_BASE="${VITE_API_BASE}" \
+            -e VITE_BASE_PATH="${VITE_BASE_PATH}" \
+            -v "${PWD}:/workspace" \
+            -w /workspace/frontend \
+            node:20-alpine sh -c "npm ci && npm run build"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+
+      - name: Deploy to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
